@@ -22,6 +22,9 @@ import math
 import tensorflow as tf
 from ops.special_math_ops import exponential_space_einsum as einsum
 
+# Use TensorFlow 1.x style APIs with TensorFlow 2.x
+tf.compat.v1.disable_eager_execution()
+
 class Smoe:
     def __init__(self, image, kernels_per_dim=None, train_pis=True, init_params=None, start_batches=1, train_gammas=True, radial_as=False):
         self.domain = None
@@ -109,8 +112,8 @@ class Smoe:
 
         self.start_pis = self.pis_init.size
 
-        gpu_options = tf.GPUOptions(allow_growth=True)
-        self.session = tf.InteractiveSession(config=tf.ConfigProto(gpu_options=gpu_options))
+        gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
+        self.session = tf.compat.v1.InteractiveSession(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
         # self.session = tf.Session()
 
         self.init_model(self.domain, self.nu_e_init, self.gamma_e_init, self.pis_init, self.musX_init, self.A_init,
@@ -138,8 +141,8 @@ class Smoe:
         self.target_op = tf.constant(self.image_flat, dtype=tf.float32)
         self.domain_op = tf.constant(domain_init, dtype=tf.float32)
 
-        self.start = tf.placeholder(dtype=tf.int32)
-        self.end = tf.placeholder(dtype=tf.int32)
+        self.start = tf.compat.v1.placeholder(dtype=tf.int32)
+        self.end = tf.compat.v1.placeholder(dtype=tf.int32)
         self.target_op = self.target_op[self.start:self.end]
         self.domain_op = self.domain_op[self.start:self.end]
 
@@ -161,9 +164,9 @@ class Smoe:
         gamma_e = tf.boolean_mask(self.gamma_e_var, pis_mask)
         A = tf.boolean_mask(A, pis_mask)
         pis = tf.boolean_mask(self.pis_var, pis_mask)
-        A = tf.matrix_band_part(A, -1, 0)
+        A = tf.linalg.band_part(A, -1, 0)
 
-        n_div = tf.reduce_prod(tf.matrix_diag_part(A), axis=-1)
+        n_div = tf.reduce_prod(tf.linalg.diag_part(A), axis=-1)
         n_dis = np.sqrt(np.power(2*np.pi, 2))
         n_quo = n_div / n_dis
 
@@ -192,18 +195,18 @@ class Smoe:
         self.A_best_var = tf.Variable(self.A_var)
         self.gamma_e_best_var = tf.Variable(self.gamma_e_var)
         self.nu_e_best_var = tf.Variable(self.nu_e_var)
-        self.checkpoint_best_op = tf.group(tf.assign(self.pis_best_var, self.pis_var),
-                                           tf.assign(self.musX_best_var, self.musX_var),
-                                           tf.assign(self.A_best_var, self.A_var),
-                                           tf.assign(self.gamma_e_best_var, self.gamma_e_var),
-                                           tf.assign(self.nu_e_best_var, self.nu_e_var))
+        self.checkpoint_best_op = tf.group(tf.compat.v1.assign(self.pis_best_var, self.pis_var),
+                                           tf.compat.v1.assign(self.musX_best_var, self.musX_var),
+                                           tf.compat.v1.assign(self.A_best_var, self.A_var),
+                                           tf.compat.v1.assign(self.gamma_e_best_var, self.gamma_e_var),
+                                           tf.compat.v1.assign(self.nu_e_best_var, self.nu_e_var))
 
         mse = tf.reduce_sum(tf.square(self.res - self.target_op)) / tf.cast(tf.size(self.target_op), dtype=tf.float32)
 
-        self.num_pi_op = tf.count_nonzero(pis_mask)
+        self.num_pi_op = tf.math.count_nonzero(pis_mask)
 
-        self.pis_l1 = tf.placeholder(tf.float32)
-        self.u_l1 = tf.placeholder(tf.float32)
+        self.pis_l1 = tf.compat.v1.placeholder(tf.float32)
+        self.u_l1 = tf.compat.v1.placeholder(tf.float32)
         pis_l1 = self.pis_l1 * tf.reduce_sum(pis) / self.start_pis
         u_l1 = self.u_l1 * tf.reduce_sum(tf.matrix_diag_part(A))
 
@@ -211,18 +214,18 @@ class Smoe:
 
         self.mse_op = mse * (255 ** 2)
 
-        init_new_vars_op = tf.global_variables_initializer()
+        init_new_vars_op = tf.compat.v1.global_variables_initializer()
         self.session.run(init_new_vars_op)
 
     def checkpoint(self, path):
         if self.save_op is None:
-            self.save_op = tf.train.Saver(max_to_keep=None)
+            self.save_op = tf.compat.v1.train.Saver(max_to_keep=None)
         save_path = self.save_op.save(self.session, path)
         print("Model saved in file: %s" % save_path)
 
     def restore(self, path):
         if self.save_op is None:
-            self.save_op = tf.train.Saver(max_to_keep=None)
+            self.save_op = tf.compat.v1.train.Saver(max_to_keep=None)
 
         self.save_op.restore(self.session, path)
         print("Model restored from file: %s" % path)
@@ -245,14 +248,14 @@ class Smoe:
         var_opt3 = [self.A_var]
 
         # sort out not trainable vars
-        var_opt1 = [var for var in var_opt1 if var in tf.trainable_variables()]
-        var_opt2 = [var for var in var_opt2 if var in tf.trainable_variables()]
-        var_opt3 = [var for var in var_opt3 if var in tf.trainable_variables()]
+        var_opt1 = [var for var in var_opt1 if var in tf.compat.v1.trainable_variables()]
+        var_opt2 = [var for var in var_opt2 if var in tf.compat.v1.trainable_variables()]
+        var_opt3 = [var for var in var_opt3 if var in tf.compat.v1.trainable_variables()]
 
         accum_gradients = [tf.Variable(tf.zeros_like(var.initialized_value()), trainable=False)
                            for var in var_opt1 + var_opt2 + var_opt3]
         self.zero_op = [grad.assign(tf.zeros_like(grad)) for grad in accum_gradients]
-        gradients = tf.gradients(self.loss_op, var_opt1 + var_opt2 + var_opt3)
+        gradients = tf.compat.v1.gradients(self.loss_op, var_opt1 + var_opt2 + var_opt3)
         self.accum_ops = [accum_gradients[i].assign_add(gv) for i, gv in enumerate(gradients)]
 
         if grad_clip_value_abs is not None:
@@ -271,14 +274,14 @@ class Smoe:
         self.train_op = tf.group(train_op1, train_op2, train_op3)
 
         uninitialized_vars = []
-        for var in tf.global_variables():
+        for var in tf.compat.v1.global_variables():
             try:
                 self.session.run(var)
             except tf.errors.FailedPreconditionError:
                 if var is not None:
                     uninitialized_vars.append(var)
 
-        init_new_vars_op = tf.variables_initializer(uninitialized_vars)
+        init_new_vars_op = tf.compat.v1.variables_initializer(uninitialized_vars)
         self.session.run(init_new_vars_op)
 
     def train(self, num_iter, val_iter=100, optimizer1=None, optimizer2=None, optimizer3=None, grad_clip_value_abs=None, pis_l1=0,
