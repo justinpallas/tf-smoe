@@ -208,7 +208,7 @@ class Smoe:
         self.pis_l1 = tf.compat.v1.placeholder(tf.float32)
         self.u_l1 = tf.compat.v1.placeholder(tf.float32)
         pis_l1 = self.pis_l1 * tf.reduce_sum(pis) / self.start_pis
-        u_l1 = self.u_l1 * tf.reduce_sum(tf.matrix_diag_part(A))
+        u_l1 = self.u_l1 * tf.reduce_sum(tf.linalg.diag_part(A))
 
         self.loss_op = mse + pis_l1 + u_l1
 
