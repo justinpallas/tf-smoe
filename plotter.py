@@ -18,7 +18,7 @@
 
 
 from sklearn.metrics import mean_squared_error
-from skimage.measure import compare_ssim
+from skimage.metrics import structural_similarity
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
@@ -245,7 +245,7 @@ class DenoisePlotter:
         y_est = self.ref
         mse = mean_squared_error(y_est * 255, self.y * 255)
         psnr = 10 * np.log10(255 ** 2 / mse)
-        ssim = compare_ssim(y_est, self.y, data_range=1)
+        ssim = structural_similarity(y_est, self.y, data_range=1)
 
         self.axes[2].set_title('reference \n mse: '+str(round(mse,2))+' psnr '+str(round(psnr,2))+'\n ssim: '+str(round(ssim,3)))
         self.axes[2].imshow(y_est, cmap='gray', interpolation='None', vmin=0, vmax=1)
@@ -253,7 +253,7 @@ class DenoisePlotter:
         y_est = self.z
         mse = mean_squared_error(y_est * 255, self.y * 255)
         psnr = 10 * np.log10(255 ** 2 / mse)
-        ssim = compare_ssim(y_est, self.y, data_range=1)
+        ssim = structural_similarity(y_est, self.y, data_range=1)
 
         self.axes[3].set_title(
             'noisy input \n mse: ' + str(round(mse, 2)) + ' psnr ' + str(round(psnr, 2)) + '\n ssim: ' + str(
@@ -268,7 +268,7 @@ class DenoisePlotter:
         mse = mean_squared_error(y_est * 255, self.y * 255)
         psnr_ = psnr(mse)
         self.psnrs.append(psnr_)
-        ssim = compare_ssim(y_est, self.y, data_range=1)
+        ssim = structural_similarity(y_est, self.y, data_range=1)
 
         self.axes[1].clear()
         self.axes[1].set_title('denoised \n mse: '+str(round(mse,2))+' psnr '+str(round(psnr_,2))+'\n ssim: '+str(round(ssim,3)))

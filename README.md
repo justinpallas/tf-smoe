@@ -9,13 +9,15 @@ This repository contains the implementation of a reference class for training an
 ## Getting started
 ### Installation
 
-There are no special dependencies to run this code except python3 and the packages listed below.
-It is recommended to use a virtual environment to run this code:
+This project now targets TensorFlow 2.x.  Use a recent Python (3.10 or
+newer) virtual environment and install the packages listed in
+`requirements.txt`:
 
 ```
-virtualenv -p python3 env
+python3 -m venv env
 source env/bin/activate
-pip install tensorflow-gpu matplotlib scikit-image scikit-learn
+pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
 

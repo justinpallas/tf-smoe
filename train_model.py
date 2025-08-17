@@ -25,6 +25,7 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
 import os
 import shutil
 
@@ -57,9 +58,9 @@ def main(image_path, results_path, iterations, validation_iterations, kernels_pe
     smoe = Smoe(orig, kernels_per_dim, init_params=init_params, train_pis=not disable_train_pis,
                 train_gammas=not disable_train_gammas, radial_as=radial_as, start_batches=batches)
 
-    optimizer1 = tf.train.AdamOptimizer(base_lr)
-    optimizer2 = tf.train.AdamOptimizer(base_lr/lr_div)
-    optimizer3 = tf.train.AdamOptimizer(base_lr*lr_mult)
+    optimizer1 = tf.compat.v1.train.AdamOptimizer(base_lr)
+    optimizer2 = tf.compat.v1.train.AdamOptimizer(base_lr/lr_div)
+    optimizer3 = tf.compat.v1.train.AdamOptimizer(base_lr*lr_mult)
 
     # optimizers have to be set before the restore
     smoe.set_optimizer(optimizer1, optimizer2, optimizer3)
