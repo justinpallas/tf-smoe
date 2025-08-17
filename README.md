@@ -76,6 +76,8 @@ To train a model initialized with a 12x12 kernel grid for 1000 iterations run:
 (env)$ python train_model.py --image_path=data/demo.png --results_path=results
 ```
 
+If a color image is provided, it will be converted to grayscale automatically before training.
+
 Using a decent GPU, this should take less than a minute.
 The progress of the training will be shown in plots, you can disable this by setting `--quiet=1`.
 For each validation step (by default every 100 training iterations), the current model parameters, the reconstructed image and a checkpoint is created.

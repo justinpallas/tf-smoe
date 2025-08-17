@@ -90,7 +90,11 @@ class Smoe:
 
         # generate initializations
         self.image = image
-        self.image_flat = image.flatten()
+        if self.image.ndim == 3:
+            self.image = self.rgb_to_grayscale(self.image)
+        if self.image.dtype == np.uint8:
+            self.image = self.image.astype(np.float32) / 255.
+        self.image_flat = self.image.flatten()
         self.init_domain()
         self.intervals = self.calc_intervals(self.image_flat.size, start_batches)
         self.batches = start_batches
@@ -510,6 +514,11 @@ class Smoe:
     def generate_pis(self, grid_size):
         number = grid_size ** 2
         self.pis_init = np.ones((number,), dtype=np.float32) / number
+
+    @staticmethod
+    def rgb_to_grayscale(image):
+        """Convert an RGB or RGBA image to grayscale."""
+        return np.dot(image[..., :3], [0.299, 0.587, 0.114]).astype(image.dtype)
 
     @staticmethod
     def gen_domain(in_):
