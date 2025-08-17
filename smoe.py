@@ -257,8 +257,14 @@ class Smoe:
         var_opt2 = [var for var in var_opt2 if var in tf.compat.v1.trainable_variables()]
         var_opt3 = [var for var in var_opt3 if var in tf.compat.v1.trainable_variables()]
 
-        accum_gradients = [tf.Variable(tf.zeros_like(var.initialized_value()), trainable=False)
-                           for var in var_opt1 + var_opt2 + var_opt3]
+        # `Variable.initialized_value()` was removed in TF2 and raised a
+        # `NotImplementedError` when used under `tf.compat.v1`.  We only need a
+        # zero tensor matching the shape/dtype of each variable, which can be
+        # created without reading the variable's value.
+        accum_gradients = [
+            tf.Variable(tf.zeros(var.shape, dtype=var.dtype), trainable=False)
+            for var in var_opt1 + var_opt2 + var_opt3
+        ]
         self.zero_op = [grad.assign(tf.zeros_like(grad)) for grad in accum_gradients]
         gradients = tf.compat.v1.gradients(self.loss_op, var_opt1 + var_opt2 + var_opt3)
         self.accum_ops = [accum_gradients[i].assign_add(gv) for i, gv in enumerate(gradients)]
