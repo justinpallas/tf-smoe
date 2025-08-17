@@ -190,11 +190,16 @@ class Smoe:
         self.res = tf.minimum(tf.maximum(self.res, 0), 1)
 
         # checkpoint op
-        self.pis_best_var = tf.Variable(self.pis_var)
-        self.musX_best_var = tf.Variable(self.musX_var)
-        self.A_best_var = tf.Variable(self.A_var)
-        self.gamma_e_best_var = tf.Variable(self.gamma_e_var)
-        self.nu_e_best_var = tf.Variable(self.nu_e_var)
+        # Use the provided numpy initializations rather than other variables to
+        # avoid "resource does not exist" errors during variable
+        # initialisation with TensorFlow 2.x's resource variables.  The best
+        # variables are non-trainable snapshots that will later be updated via
+        # `checkpoint_best_op`.
+        self.pis_best_var = tf.Variable(pis_init, trainable=False, dtype=tf.float32)
+        self.musX_best_var = tf.Variable(musX_init, trainable=False, dtype=tf.float32)
+        self.A_best_var = tf.Variable(A_init, trainable=False, dtype=tf.float32)
+        self.gamma_e_best_var = tf.Variable(gamma_e_init, trainable=False, dtype=tf.float32)
+        self.nu_e_best_var = tf.Variable(nu_e_init, trainable=False, dtype=tf.float32)
         self.checkpoint_best_op = tf.group(tf.compat.v1.assign(self.pis_best_var, self.pis_var),
                                            tf.compat.v1.assign(self.musX_best_var, self.musX_var),
                                            tf.compat.v1.assign(self.A_best_var, self.A_var),
