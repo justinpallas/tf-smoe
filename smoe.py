@@ -284,16 +284,10 @@ class Smoe:
         train_op3 = self.optimizer3.apply_gradients(zip(gradients3, var_opt3))
         self.train_op = tf.group(train_op1, train_op2, train_op3)
 
-        uninitialized_vars = []
-        for var in tf.compat.v1.global_variables():
-            try:
-                self.session.run(var)
-            except tf.errors.FailedPreconditionError:
-                if var is not None:
-                    uninitialized_vars.append(var)
-
-        init_new_vars_op = tf.compat.v1.variables_initializer(uninitialized_vars)
-        self.session.run(init_new_vars_op)
+        # Initialize all variables in the graph (safe here because we haven't trained yet).
+        # This avoids probing variables and spamming logs about uninitialized resources.
+        init_all = tf.compat.v1.global_variables_initializer()
+        self.session.run(init_all)
 
     def train(self, num_iter, val_iter=100, optimizer1=None, optimizer2=None, optimizer3=None, grad_clip_value_abs=None, pis_l1=0,
               u_l1=0, callbacks=()):
