@@ -90,7 +90,13 @@ class Smoe:
 
         # generate initializations
         self.image = image
-        self.image_flat = image.flatten()
+        if self.image.ndim == 3:
+            self.image = self.rgb_to_grayscale(self.image)
+        if self.image.dtype == np.uint8:
+            self.image = self.image.astype(np.float32) / 255.
+        if self.image.shape[0] != self.image.shape[1]:
+            self.image = self.crop_to_square(self.image)
+        self.image_flat = self.image.flatten()
         self.init_domain()
         self.intervals = self.calc_intervals(self.image_flat.size, start_batches)
         self.batches = start_batches
@@ -506,10 +512,27 @@ class Smoe:
         self.pis_init = np.ones((number,), dtype=np.float32) / number
 
     @staticmethod
+    def rgb_to_grayscale(image):
+        """Convert an RGB or RGBA image to grayscale."""
+        return np.dot(image[..., :3], [0.299, 0.587, 0.114]).astype(image.dtype)
+
+    @staticmethod
+    def crop_to_square(image):
+        """Center-crop an image to a square using the smaller dimension."""
+        h, w = image.shape[:2]
+        if h == w:
+            return image
+        min_dim = min(h, w)
+        start_h = (h - min_dim) // 2
+        start_w = (w - min_dim) // 2
+        return image[start_h:start_h + min_dim, start_w:start_w + min_dim]
+
+    @staticmethod
     def gen_domain(in_):
         if type(in_) is np.ndarray:
             assert len(in_.shape) == 2, "only 2d images supported!"
-            assert in_.shape[0] == in_.shape[1], "only quadratic images supported!"
+            if in_.shape[0] != in_.shape[1]:
+                in_ = Smoe.crop_to_square(in_)
             num_per_dim = in_.shape[0]
         else:
             num_per_dim = in_
